@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Tábua de Galton</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .main-controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .board-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .board-btn {
+            padding: 12px 30px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .board-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .board-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .global-controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .control-group input[type="range"] {
+            width: 200px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn-primary {
+            background: #28a745;
+        }
+
+        .btn-primary:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #dc3545;
+        }
+
+        .btn-secondary:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+
+        .boards-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .board-wrapper {
+            flex: 1;
+            min-width: 400px;
+            max-width: 550px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .board-title {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .board-controls {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .board-control-row {
+            margin-bottom: 15px;
+        }
+
+        .board-control-row label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .board-control-row input[type="range"] {
+            width: 100%;
+        }
+
+        .board-control-row input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .slider-value {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            border: 3px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            margin-bottom: 15px;
+        }
+
+        .convergence-canvas {
+            height: 150px !important;
+            border: 2px solid #ddd !important;
+        }
+
+        .convergence-title {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .stats {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stats-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .stats-value {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .comparison-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .comparison-section.active {
+            display: block;
+        }
+
+        .comparison-title {
+            text-align: center;
+            font-size: 1.8em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        #comparisonCanvas {
+            display: block;
+            margin: 0 auto;
+            border: 3px solid #667eea;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 1200px) {
+            .board-wrapper {
+                min-width: 100%;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Simulador de Tábua de Galton (Quincunx)</h1>
+        <p class="subtitle">Demonstração interativa de distribuições de probabilidade e Teorema do Limite Central</p>
+
+        <div class="main-controls">
+            <div class="board-selector">
+                <button class="board-btn active" onclick="setBoardCount(1)">1 Tábua</button>
+                <button class="board-btn" onclick="setBoardCount(2)">2 Tábuas</button>
+                <button class="board-btn" onclick="setBoardCount(3)">3 Tábuas</button>
+            </div>
+
+            <div class="global-controls">
+                <div class="control-group">
+                    <label>Velocidade:</label>
+                    <input type="range" id="speedControl" min="1" max="10" value="7" oninput="updateSpeed(this.value)">
+                    <span class="slider-value" id="speedValue">7x</span>
+                </div>
+                <button class="btn btn-primary" onclick="startSimulation()">▶ Iniciar Simulação</button>
+                <button class="btn btn-secondary" onclick="resetSimulation()">🔄 Limpar</button>
+                <button class="btn btn-info" onclick="toggleComparison()">📊 Comparar Distribuições</button>
+            </div>
+        </div>
+
+        <div class="boards-container" id="boardsContainer">
+            <!-- Boards will be dynamically created here -->
+        </div>
+
+        <div class="comparison-section" id="comparisonSection">
+            <h2 class="comparison-title">Comparação de Distribuições</h2>
+            <canvas id="comparisonCanvas" width="1200" height="500"></canvas>
+        </div>
+
+        <div class="info-box">
+            <h3>📖 Como usar:</h3>
+            <p>
+                <strong>Posição de Queda:</strong> Ajusta onde as bolinhas começam (esquerda/centro/direita) - simula diferentes médias (μ).<br>
+                <strong>Níveis de Pinos:</strong> Mais pinos = maior dispersão (maior desvio padrão σ).<br>
+                <strong>Quantidade de Bolinhas:</strong> Demonstra a Lei dos Grandes Números - mais bolinhas = distribuição mais suave.<br>
+                A curva vermelha representa a distribuição normal teórica esperada.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let boardCount = 1;
+        let boards = [];
+        let animationId = null;
+        let simulationSpeed = 7;
+        let isRunning = false;
+
+        // Board colors
+        const boardColors = ['#FF6B6B', '#4ECDC4', '#FFD93D'];
+
+        // Board class
+        class GaltonBoard {
+            constructor(id, color) {
+                this.id = id;
+                this.color = color;
+                this.canvas = null;
+                this.ctx = null;
+                this.width = 500;
+                this.height = 600;
+                
+                // Parameters
+                this.levels = 12;
+                this.ballCount = 5000;
+                this.dropPosition = 0.5; // 0 to 1 (left to right)
+                
+                // Physics
+                this.balls = [];
+                this.bins = [];
+                this.pegs = [];
+                this.binCount = this.levels + 1;
+                
+                // Stats
+                this.droppedBalls = 0;
+                this.mean = 0;
+                this.stdDev = 0;
+                
+                // Convergence tracking
+                this.meanHistory = [];
+                this.convergenceCanvas = null;
+                this.convergenceCtx = null;
+                this.expectedMean = this.binCount / 2; // Center bin
+                
+                this.setupPegs();
+                this.setupBins();
+            }
+
+            setupPegs() {
+                this.pegs = [];
+                const verticalSpacing = (this.height * 0.6) / this.levels;
+                
+                // Use wider spacing to ensure balls can interact with pegs properly
+                const totalWidth = this.width * 0.8;
+                const pegSpacing = totalWidth / this.levels;
+                
+                for (let level = 0; level < this.levels; level++) {
+                    const pegsInLevel = level + 1;
+                    const levelWidth = (pegsInLevel - 1) * pegSpacing;
+                    const startX = (this.width - levelWidth) / 2;
+                    
+                    for (let i = 0; i < pegsInLevel; i++) {
+                        this.pegs.push({
+                            x: startX + i * pegSpacing,
+                            y: 80 + level * verticalSpacing,
+                            radius: 5,
+                            level: level
+                        });
+                    }
+                }
+            }
+
+            setupBins() {
+                this.bins = new Array(this.binCount).fill(0);
+            }
+
+            createBall() {
+                // Map drop position (0-1) to actual x coordinate
+                // Ensure balls start in a position where they will hit pegs
+                const centerX = this.width / 2;
+                const maxOffset = this.width * 0.3;
+                const startX = centerX + (this.dropPosition - 0.5) * maxOffset;
+                
+                return {
+                    x: startX + (Math.random() - 0.5) * 10, // Small random variation
+                    y: 20,
+                    vx: (Math.random() - 0.5) * 0.5, // Slight initial horizontal velocity
+                    vy: 1,
+                    radius: 3,
+                    level: 0,
+                    settled: false,
+                    lastPegHit: null
+                };
+            }
+
+            updateBall(ball) {
+                if (ball.settled) return;
+
+                // Gravity and friction
+                ball.vy += 0.5;
+                ball.vx *= 0.98; // air resistance
+                
+                ball.y += ball.vy;
+                ball.x += ball.vx;
+
+                // Check collision with pegs
+                for (let peg of this.pegs) {
+                    const dx = ball.x - peg.x;
+                    const dy = ball.y - peg.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < ball.radius + peg.radius && !ball.lastPegHit) {
+                        // Calculate collision angle
+                        const angle = Math.atan2(dy, dx);
+                        
+                        // Push ball away from peg
+                        const overlap = ball.radius + peg.radius - distance;
+                        ball.x += Math.cos(angle) * overlap;
+                        ball.y += Math.sin(angle) * overlap;
+                        
+                        // 50-50 chance to go left or right (core Galton board mechanic)
+                        const direction = Math.random() < 0.5 ? -1 : 1;
+                        ball.vx = direction * (2 + Math.random() * 2);
+                        ball.vy = Math.abs(ball.vy) * 0.5 + 2; // Continue downward
+                        
+                        // Mark peg as hit to avoid multiple collisions
+                        ball.lastPegHit = peg;
+                        setTimeout(() => ball.lastPegHit = null, 50);
+                    }
+                }
+
+                // Check if ball reached the bottom
+                if (ball.y > this.height * 0.72) {
+                    ball.settled = true;
+                    
+                    // Calculate which bin based on peg alignment
+                    const pegPos = this.getPegPositions();
+                    
+                    // Find closest peg in last level
+                    let binIndex = 0;
+                    let minDistance = Infinity;
+                    
+                    for (let i = 0; i < pegPos.pegsInLastLevel; i++) {
+                        const pegX = pegPos.startX + i * pegPos.pegSpacing;
+                        const distance = Math.abs(ball.x - pegX);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            binIndex = i;
+                        }
+                    }
+                    
+                    binIndex = Math.max(0, Math.min(this.binCount - 1, binIndex));
+                    
+                    this.bins[binIndex]++;
+                    this.droppedBalls++;
+                    this.updateStats();
+                }
+
+                // Boundaries - reflect with dampening
+                if (ball.x < ball.radius) {
+                    ball.x = ball.radius;
+                    ball.vx = Math.abs(ball.vx) * 0.5;
+                }
+                if (ball.x > this.width - ball.radius) {
+                    ball.x = this.width - ball.radius;
+                    ball.vx = -Math.abs(ball.vx) * 0.5;
+                }
+            }
+
+            updateStats() {
+                // Calculate mean
+                let sum = 0;
+                let total = 0;
+                for (let i = 0; i < this.bins.length; i++) {
+                    sum += i * this.bins[i];
+                    total += this.bins[i];
+                }
+                this.mean = total > 0 ? sum / total : 0;
+
+                // Calculate standard deviation
+                let variance = 0;
+                for (let i = 0; i < this.bins.length; i++) {
+                    variance += this.bins[i] * Math.pow(i - this.mean, 2);
+                }
+                this.stdDev = total > 0 ? Math.sqrt(variance / total) : 0;
+                
+                // Store mean history for convergence graph (sample every 10 balls to reduce data)
+                if (this.droppedBalls % 10 === 0) {
+                    this.meanHistory.push({
+                        ballCount: this.droppedBalls,
+                        mean: this.mean
+                    });
+                }
+                
+                // Draw convergence graph
+                this.drawConvergence();
+            }
+
+            // Helper function to calculate peg positions (avoid code duplication)
+            getPegPositions() {
+                const verticalSpacing = (this.height * 0.6) / this.levels;
+                const totalWidth = this.width * 0.8;
+                const pegSpacing = totalWidth / this.levels;
+                const pegsInLastLevel = this.levels + 1;
+                const levelWidth = (pegsInLastLevel - 1) * pegSpacing;
+                const startX = (this.width - levelWidth) / 2;
+                
+                return { verticalSpacing, totalWidth, pegSpacing, pegsInLastLevel, levelWidth, startX };
+            }
+
+            draw() {
+                if (!this.ctx) return;
+
+                this.ctx.clearRect(0, 0, this.width, this.height);
+
+                // Draw pegs
+                this.ctx.fillStyle = '#555';
+                for (let peg of this.pegs) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+
+                // Draw bins histogram
+                const binWidth = this.width / this.binCount;
+                const maxBinHeight = Math.max(...this.bins, 1);
+                const histogramHeight = this.height * 0.25;
+                const histogramBottom = this.height - 5;
+
+                // Calculate peg positions in last level for alignment
+                const pegPos = this.getPegPositions();
+
+                for (let i = 0; i < this.bins.length; i++) {
+                    const barHeight = (this.bins[i] / maxBinHeight) * histogramHeight;
+                    
+                    // Align bins with peg positions in last level
+                    let x, width;
+                    if (i === 0) {
+                        // First bin: from left edge to midpoint between first and second peg
+                        x = 0;
+                        width = pegPos.startX + pegPos.pegSpacing / 2;
+                    } else if (i === this.bins.length - 1) {
+                        // Last bin: from midpoint between last two pegs to right edge
+                        x = pegPos.startX + (i - 0.5) * pegPos.pegSpacing;
+                        width = this.width - x;
+                    } else {
+                        // Middle bins: centered on pegs
+                        x = pegPos.startX + (i - 0.5) * pegPos.pegSpacing;
+                        width = pegPos.pegSpacing;
+                    }
+                    
+                    const y = histogramBottom - barHeight;
+
+                    this.ctx.fillStyle = this.color + '99';
+                    this.ctx.fillRect(x, y, width - 2, barHeight);
+                    
+                    this.ctx.strokeStyle = this.color;
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(x, y, width - 2, barHeight);
+                }
+
+                // Draw normal curve overlay
+                if (this.droppedBalls > 0) {
+                    this.drawNormalCurve();
+                }
+
+                // Draw balls
+                for (let ball of this.balls) {
+                    if (!ball.settled) {
+                        this.ctx.fillStyle = this.color;
+                        this.ctx.beginPath();
+                        this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                }
+
+                // Draw bin dividers aligned with pegs
+                this.ctx.strokeStyle = '#ddd';
+                this.ctx.lineWidth = 1;
+                
+                // Draw dividers at peg positions
+                for (let i = 0; i <= this.levels; i++) {
+                    const x = pegPos.startX + i * pegPos.pegSpacing;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, histogramBottom - histogramHeight);
+                    this.ctx.lineTo(x, histogramBottom);
+                    this.ctx.stroke();
+                }
+            }
+
+            drawNormalCurve() {
+                const maxBinHeight = Math.max(...this.bins, 1);
+                const histogramHeight = this.height * 0.25;
+                const histogramBottom = this.height - 5;
+
+                // Calculate peg positions for x coordinates
+                const pegPos = this.getPegPositions();
+
+                // Calculate the maximum value of the normal distribution
+                const normalPeak = 1 / (this.stdDev * Math.sqrt(2 * Math.PI));
+                
+                // Calculate expected normal distribution values
+                let normalValues = [];
+                let maxNormalValue = 0;
+                
+                for (let i = 0; i < this.binCount; i++) {
+                    const exponent = -Math.pow(i - this.mean, 2) / (2 * Math.pow(this.stdDev, 2));
+                    const normalValue = Math.exp(exponent) / (this.stdDev * Math.sqrt(2 * Math.PI));
+                    normalValues.push(normalValue);
+                    maxNormalValue = Math.max(maxNormalValue, normalValue);
+                }
+                
+                // Draw the normal curve
+                this.ctx.strokeStyle = '#FF0000';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+
+                let firstPoint = true;
+                for (let i = 0; i < this.binCount; i++) {
+                    // X position aligned with peg
+                    const x = pegPos.startX + i * pegPos.pegSpacing;
+                    
+                    // Scale the normal value to histogram coordinates
+                    const normalCount = normalValues[i] * this.droppedBalls;
+                    const normalHeight = (normalCount / maxBinHeight) * histogramHeight;
+                    const y = histogramBottom - normalHeight;
+
+                    if (firstPoint) {
+                        this.ctx.moveTo(x, y);
+                        firstPoint = false;
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+                
+                this.ctx.stroke();
+            }
+
+            drawConvergence() {
+                if (!this.convergenceCtx || this.meanHistory.length < 2) return;
+                
+                const canvas = this.convergenceCanvas;
+                const ctx = this.convergenceCtx;
+                const width = canvas.width;
+                const height = canvas.height;
+                const padding = 40;
+                const chartWidth = width - 2 * padding;
+                const chartHeight = height - 2 * padding;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, width, height);
+                
+                // Background
+                ctx.fillStyle = '#f9f9f9';
+                ctx.fillRect(0, 0, width, height);
+                
+                // Calculate scales
+                const maxBalls = this.ballCount;
+                const minMean = Math.max(0, this.expectedMean - this.binCount * 0.3);
+                const maxMean = Math.min(this.binCount, this.expectedMean + this.binCount * 0.3);
+                const meanRange = maxMean - minMean;
+                
+                // Draw axes
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(padding, padding);
+                ctx.lineTo(padding, height - padding);
+                ctx.lineTo(width - padding, height - padding);
+                ctx.stroke();
+                
+                // Draw expected mean line (horizontal)
+                ctx.strokeStyle = '#FF0000';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                const expectedY = height - padding - ((this.expectedMean - minMean) / meanRange) * chartHeight;
+                ctx.beginPath();
+                ctx.moveTo(padding, expectedY);
+                ctx.lineTo(width - padding, expectedY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Draw expected mean label
+                ctx.fillStyle = '#FF0000';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(`μ esperado = ${this.expectedMean.toFixed(1)}`, width - padding - 5, expectedY - 5);
+                
+                // Draw convergence line
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                
+                let firstPoint = true;
+                for (let point of this.meanHistory) {
+                    const x = padding + (point.ballCount / maxBalls) * chartWidth;
+                    const y = height - padding - ((point.mean - minMean) / meanRange) * chartHeight;
+                    
+                    if (firstPoint) {
+                        ctx.moveTo(x, y);
+                        firstPoint = false;
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+                
+                // Draw current point
+                if (this.meanHistory.length > 0) {
+                    const lastPoint = this.meanHistory[this.meanHistory.length - 1];
+                    const x = padding + (lastPoint.ballCount / maxBalls) * chartWidth;
+                    const y = height - padding - ((lastPoint.mean - minMean) / meanRange) * chartHeight;
+                    
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Labels
+                ctx.fillStyle = '#333';
+                ctx.font = '11px Arial';
+                ctx.textAlign = 'center';
+                
+                // X-axis label
+                ctx.fillText('Número de Bolinhas', width / 2, height - 5);
+                
+                // Y-axis label
+                ctx.save();
+                ctx.translate(10, height / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText('Média Observada', 0, 0);
+                ctx.restore();
+                
+                // Axis values
+                ctx.textAlign = 'center';
+                ctx.fillText('0', padding, height - padding + 15);
+                ctx.fillText(maxBalls.toString(), width - padding, height - padding + 15);
+                
+                ctx.textAlign = 'right';
+                ctx.fillText(minMean.toFixed(1), padding - 5, height - padding + 5);
+                ctx.fillText(maxMean.toFixed(1), padding - 5, padding + 5);
+            }
+
+            update() {
+                // Add new balls based on speed
+                if (this.balls.length < this.ballCount && this.balls.length < this.droppedBalls + 50) {
+                    for (let i = 0; i < simulationSpeed; i++) {
+                        if (this.balls.length < this.ballCount) {
+                            this.balls.push(this.createBall());
+                        }
+                    }
+                }
+
+                // Update all balls
+                for (let ball of this.balls) {
+                    this.updateBall(ball);
+                }
+
+                this.draw();
+            }
+
+            reset() {
+                this.balls = [];
+                this.bins = new Array(this.binCount).fill(0);
+                this.droppedBalls = 0;
+                this.mean = 0;
+                this.stdDev = 0;
+                this.meanHistory = [];
+                this.expectedMean = this.binCount / 2;
+                this.setupPegs();
+                this.draw();
+                if (this.convergenceCtx) {
+                    this.convergenceCtx.clearRect(0, 0, this.convergenceCanvas.width, this.convergenceCanvas.height);
+                }
+            }
+
+            updateParameters() {
+                // The number of bins should match the number of pegs in the last level
+                // Last level has (levels + 1) pegs, so we need (levels + 1) bins
+                this.binCount = this.levels + 1;
+                this.setupPegs();
+                this.setupBins();
+                this.reset();
+            }
+        }
+
+        // Initialize
+        function init() {
+            console.log('Init executado');
+            setBoardCount(1);
+            console.log('Boards criados:', boards.length);
+        }
+
+        function setBoardCount(count) {
+            console.log('setBoardCount chamado com:', count);
+            boardCount = count;
+            
+            // Update button states
+            document.querySelectorAll('.board-btn').forEach((btn, index) => {
+                btn.classList.toggle('active', index + 1 === count);
+            });
+
+            createBoards();
+        }
+
+        function createBoards() {
+            console.log('createBoards chamado, boardCount:', boardCount);
+            const container = document.getElementById('boardsContainer');
+            if (!container) {
+                console.error('Container não encontrado!');
+                return;
+            }
+            
+            container.innerHTML = '';
+            boards = [];
+
+            for (let i = 0; i < boardCount; i++) {
+                const board = new GaltonBoard(i, boardColors[i]);
+                boards.push(board);
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'board-wrapper';
+                wrapper.innerHTML = `
+                    <div class="board-title" style="background-color: ${boardColors[i]}33; color: ${boardColors[i]}">
+                        Tábua ${i + 1}
+                    </div>
+                    <div class="board-controls">
+                        <div class="board-control-row">
+                            <label>Posição de Queda: <span class="slider-value" id="posValue${i}">Centro</span></label>
+                            <input type="range" id="posSlider${i}" min="0" max="100" value="50" 
+                                   oninput="updatePosition(${i}, this.value)">
+                        </div>
+                        <div class="board-control-row">
+                            <label>Níveis de Pinos: <span class="slider-value" id="levelValue${i}">12</span></label>
+                            <input type="range" id="levelSlider${i}" min="5" max="30" value="12" 
+                                   oninput="updateLevels(${i}, this.value)">
+                        </div>
+                        <div class="board-control-row">
+                            <label>Quantidade de Bolinhas:</label>
+                            <input type="number" id="ballCount${i}" min="1000" max="10000" value="5000" step="500"
+                                   onchange="updateBallCount(${i}, this.value)">
+                        </div>
+                    </div>
+                    <canvas id="canvas${i}" width="500" height="600"></canvas>
+                    <div class="convergence-title">📈 Convergência da Média (Lei dos Grandes Números)</div>
+                    <canvas id="convergenceCanvas${i}" class="convergence-canvas" width="500" height="150"></canvas>
+                    <div class="stats">
+                        <div class="stats-row">
+                            <span class="stats-label">Bolinhas Lançadas:</span>
+                            <span class="stats-value" id="dropped${i}">0</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">Média (μ):</span>
+                            <span class="stats-value" id="mean${i}">0.00</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">Desvio Padrão (σ):</span>
+                            <span class="stats-value" id="stddev${i}">0.00</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">Progresso:</span>
+                            <span class="stats-value" id="progress${i}">0%</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(wrapper);
+
+                // Setup canvas
+                board.canvas = document.getElementById(`canvas${i}`);
+                board.ctx = board.canvas.getContext('2d');
+                
+                // Setup convergence canvas
+                board.convergenceCanvas = document.getElementById(`convergenceCanvas${i}`);
+                board.convergenceCtx = board.convergenceCanvas.getContext('2d');
+                
+                board.draw();
+            }
+        }
+
+        function updatePosition(boardId, value) {
+            boards[boardId].dropPosition = value / 100;
+            const label = ['Esquerda', 'Centro', 'Direita'][Math.floor(value / 35)];
+            document.getElementById(`posValue${boardId}`).textContent = label;
+        }
+
+        function updateLevels(boardId, value) {
+            boards[boardId].levels = parseInt(value);
+            boards[boardId].updateParameters();
+            document.getElementById(`levelValue${boardId}`).textContent = value;
+        }
+
+        function updateBallCount(boardId, value) {
+            const count = Math.max(1000, Math.min(10000, parseInt(value)));
+            boards[boardId].ballCount = count;
+            document.getElementById(`ballCount${boardId}`).value = count;
+        }
+
+        function updateSpeed(value) {
+            simulationSpeed = parseInt(value);
+            document.getElementById('speedValue').textContent = value + 'x';
+        }
+
+        function startSimulation() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            boards.forEach(board => board.reset());
+            
+            animate();
+        }
+
+        function animate() {
+            let allComplete = true;
+            
+            boards.forEach((board, i) => {
+                board.update();
+                
+                // Update stats display
+                document.getElementById(`dropped${i}`).textContent = board.droppedBalls;
+                document.getElementById(`mean${i}`).textContent = board.mean.toFixed(2);
+                document.getElementById(`stddev${i}`).textContent = board.stdDev.toFixed(2);
+                
+                const progress = (board.droppedBalls / board.ballCount * 100).toFixed(1);
+                document.getElementById(`progress${i}`).textContent = progress + '%';
+                
+                if (board.droppedBalls < board.ballCount) {
+                    allComplete = false;
+                }
+            });
+
+            if (!allComplete) {
+                animationId = requestAnimationFrame(animate);
+            } else {
+                isRunning = false;
+            }
+        }
+
+        function resetSimulation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            isRunning = false;
+            
+            boards.forEach((board, i) => {
+                board.reset();
+                document.getElementById(`dropped${i}`).textContent = '0';
+                document.getElementById(`mean${i}`).textContent = '0.00';
+                document.getElementById(`stddev${i}`).textContent = '0.00';
+                document.getElementById(`progress${i}`).textContent = '0%';
+            });
+        }
+
+        function toggleComparison() {
+            const section = document.getElementById('comparisonSection');
+            section.classList.toggle('active');
+            
+            if (section.classList.contains('active')) {
+                drawComparison();
+            }
+        }
+
+        function drawComparison() {
+            const canvas = document.getElementById('comparisonCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Find max bin value across all boards
+            let maxValue = 0;
+            boards.forEach(board => {
+                maxValue = Math.max(maxValue, ...board.bins);
+            });
+            
+            const chartWidth = canvas.width - 100;
+            const chartHeight = canvas.height - 150;
+            const chartX = 50;
+            const chartY = 100;
+            
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(chartX, chartY);
+            ctx.lineTo(chartX, chartY + chartHeight);
+            ctx.lineTo(chartX + chartWidth, chartY + chartHeight);
+            ctx.stroke();
+            
+            // Draw each board's distribution
+            boards.forEach((board, boardIndex) => {
+                if (board.droppedBalls === 0) return;
+                
+                const binWidth = chartWidth / board.binCount;
+                
+                // Draw histogram
+                ctx.globalAlpha = 0.6;
+                ctx.fillStyle = boardColors[boardIndex];
+                
+                for (let i = 0; i < board.bins.length; i++) {
+                    const barHeight = (board.bins[i] / maxValue) * chartHeight;
+                    const x = chartX + i * binWidth;
+                    const y = chartY + chartHeight - barHeight;
+                    
+                    ctx.fillRect(x, y, binWidth - 2, barHeight);
+                }
+                
+                // Calculate normal distribution values
+                let normalValues = [];
+                let maxNormalValue = 0;
+                
+                for (let i = 0; i < board.binCount; i++) {
+                    const exponent = -Math.pow(i - board.mean, 2) / (2 * Math.pow(board.stdDev, 2));
+                    const normalValue = Math.exp(exponent) / (board.stdDev * Math.sqrt(2 * Math.PI));
+                    normalValues.push(normalValue);
+                    maxNormalValue = Math.max(maxNormalValue, normalValue);
+                }
+                
+                // Draw normal curve
+                ctx.globalAlpha = 1.0;
+                ctx.strokeStyle = boardColors[boardIndex];
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                let firstPoint = true;
+                for (let i = 0; i < board.binCount; i++) {
+                    const x = chartX + i * binWidth + binWidth / 2;
+                    
+                    // Scale the normal value to match histogram
+                    const normalCount = normalValues[i] * board.droppedBalls;
+                    const normalHeight = (normalCount / maxValue) * chartHeight;
+                    const y = chartY + chartHeight - normalHeight;
+                    
+                    if (firstPoint) {
+                        ctx.moveTo(x, y);
+                        firstPoint = false;
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+                
+                // Draw legend at top (moved from the loop to draw all at once at the top)
+            });
+            
+            // Draw legend box at top center
+            const legendWidth = 600;
+            const legendHeight = 30 * boards.length + 20;
+            const legendX = (canvas.width - legendWidth) / 2;
+            const legendY = 10;
+            
+            // Legend background
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 2;
+            ctx.fillRect(legendX, legendY, legendWidth, legendHeight);
+            ctx.strokeRect(legendX, legendY, legendWidth, legendHeight);
+            
+            // Legend items
+            boards.forEach((board, boardIndex) => {
+                if (board.droppedBalls === 0) return;
+                
+                const itemY = legendY + 10 + boardIndex * 30;
+                
+                // Color box
+                ctx.fillStyle = boardColors[boardIndex];
+                ctx.fillRect(legendX + 10, itemY, 25, 20);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(legendX + 10, itemY, 25, 20);
+                
+                // Text
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(`Tábua ${boardIndex + 1}:  μ = ${board.mean.toFixed(2)},  σ = ${board.stdDev.toFixed(2)},  n = ${board.droppedBalls}`, 
+                            legendX + 45, itemY + 15);
+            });
+            
+            ctx.globalAlpha = 1.0;
+            
+            // Labels
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Compartimentos', chartX + chartWidth / 2, canvas.height - 10);
+            
+            ctx.save();
+            ctx.translate(15, chartY + chartHeight / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Frequência', 0, 0);
+            ctx.restore();
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Inicializando simulador...');
+            init();
+            console.log('Simulador inicializado!');
+        });
+        
+        // Fallback
+        window.onload = function() {
+            if (boards.length === 0) {
+                console.log('Fallback: Inicializando via window.onload');
+                init();
+            }
+        };
+    </script>
+</body>
+</html>
