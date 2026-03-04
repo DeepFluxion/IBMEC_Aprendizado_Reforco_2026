@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Cadeias de Markov</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .panel h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .visualization {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .graph-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .state-node {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #4299e1, #667eea);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 3px solid transparent;
+        }
+
+        .state-node.current {
+            background: linear-gradient(45deg, #f56565, #e53e3e);
+            transform: scale(1.2);
+            border-color: #fed7d7;
+            box-shadow: 0 6px 20px rgba(245, 101, 101, 0.4);
+        }
+
+        .state-node:hover {
+            transform: scale(1.1);
+        }
+
+        .transition-arrow {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, #4299e1, #667eea);
+            transform-origin: left center;
+            border-radius: 1px;
+        }
+
+        .transition-label {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #2d3748;
+            border: 1px solid #e2e8f0;
+        }
+
+        .simulation-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-info {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .matrix-display {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #e53e3e;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #e53e3e;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #2f855a;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #2f855a;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            margin-bottom: 20px;
+            height: 400px;
+            position: relative;
+        }
+
+        .chart-container canvas {
+            max-height: 350px !important;
+        }
+
+        .tab-container {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Simulador de Cadeias de Markov</h1>
+        
+        <div class="main-content">
+            <!-- Configuração -->
+            <div class="panel">
+                <h2>⚙️ Configuração da Cadeia</h2>
+                
+                <div class="input-group">
+                    <label for="states">Estados (separados por vírgula):</label>
+                    <input type="text" id="states" value="Sol, Chuva, Nublado" placeholder="Ex: A, B, C">
+                </div>
+                
+                <div class="input-group">
+                    <label for="transitionMatrix">Matriz de Transição (uma linha por estado):</label>
+                    <textarea id="transitionMatrix" placeholder="Ex: para 3 estados:
+0.7, 0.2, 0.1
+0.3, 0.4, 0.3
+0.2, 0.3, 0.5">0.7, 0.2, 0.1
+0.3, 0.4, 0.3
+0.2, 0.3, 0.5</textarea>
+                </div>
+                
+                <div class="input-group">
+                    <label for="initialState">Estado Inicial:</label>
+                    <select id="initialState">
+                        <option value="0">Sol</option>
+                    </select>
+                </div>
+                
+                <button class="button" onclick="setupChain()">🚀 Criar Cadeia</button>
+                <button class="button" onclick="loadPreset('weather')">🌤️ Exemplo: Clima</button>
+                <button class="button" onclick="loadPreset('random_walk')">🚶 Exemplo: Caminhada</button>
+                
+                <div id="setupMessage"></div>
+                
+                <div class="matrix-display" id="matrixDisplay"></div>
+            </div>
+            
+            <!-- Visualização -->
+            <div class="panel">
+                <h2>🎯 Visualização da Cadeia</h2>
+                
+                <div class="graph-container" id="graphContainer">
+                    <div style="text-align: center; padding-top: 180px; color: #a0aec0;">
+                        Configure a cadeia para ver a visualização
+                    </div>
+                </div>
+                
+                <div class="simulation-controls">
+                    <button class="button" onclick="startSimulation()" id="startBtn" disabled>▶️ Iniciar</button>
+                    <button class="button" onclick="pauseSimulation()" id="pauseBtn" disabled>⏸️ Pausar</button>
+                    <button class="button" onclick="resetSimulation()" id="resetBtn" disabled>🔄 Reset</button>
+                    <button class="button" onclick="stepSimulation()" id="stepBtn" disabled>⏭️ Passo</button>
+                    
+                    <div class="speed-control">
+                        <label for="speed">Velocidade:</label>
+                        <input type="range" id="speed" min="100" max="2000" value="1000" style="width: 100px;">
+                        <span id="speedValue">1.0s</span>
+                    </div>
+                </div>
+                
+                <div class="status-info" id="statusInfo">
+                    <strong>Status:</strong> <span id="statusText">Aguardando configuração</span><br>
+                    <strong>Passo atual:</strong> <span id="currentStep">0</span><br>
+                    <strong>Estado atual:</strong> <span id="currentStateText">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estatísticas -->
+        <div class="stats-grid" id="statsGrid" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-value" id="totalSteps">0</div>
+                <div class="stat-label">Passos Totais</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="uniqueStates">0</div>
+                <div class="stat-label">Estados Visitados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="longestRun">0</div>
+                <div class="stat-label">Maior Sequência</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgTransitions">0</div>
+                <div class="stat-label">Transições/Minuto</div>
+            </div>
+        </div>
+        
+        <!-- Análise de Dados -->
+        <div class="visualization">
+            <div class="tab-container">
+                <div class="tab active" onclick="switchTab('frequency')">📊 Frequência dos Estados</div>
+                <div class="tab" onclick="switchTab('transitions')">🔄 Matriz de Transições</div>
+                <div class="tab" onclick="switchTab('timeline')">📈 Linha do Tempo</div>
+                <div class="tab" onclick="switchTab('distribution')">📋 Distribuição Estacionária</div>
+            </div>
+            
+            <div id="frequency" class="tab-content active">
+                <div class="chart-container">
+                    <canvas id="frequencyChart"></canvas>
+                </div>
+            </div>
+            
+            <div id="transitions" class="tab-content">
+                <div class="chart-container">
+                    <canvas id="transitionChart"></canvas>
+                </div>
+            </div>
+            
+            <div id="timeline" class="tab-content">
+                <div class="chart-container">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+            
+            <div id="distribution" class="tab-content">
+                <div class="chart-container" style="height: auto; padding-bottom: 20px;">
+                    <h3 style="margin-bottom: 15px;">Distribuição Estacionária Teórica vs Observada</h3>
+                    <div style="height: 300px; position: relative; margin-bottom: 20px;">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: auto;">
+                    <div id="convergenceInfo" style="margin: 0;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais
+        let states = [];
+        let transitionMatrix = [];
+        let currentStateIndex = 0;
+        let simulationData = [];
+        let isRunning = false;
+        let simulationInterval = null;
+        let stepCount = 0;
+        let startTime = null;
+        
+        // Charts
+        let frequencyChart = null;
+        let transitionChart = null;
+        let timelineChart = null;
+        let distributionChart = null;
+        
+        // Configurar cadeia de Markov
+        function setupChain() {
+            try {
+                // Obter estados
+                const statesInput = document.getElementById('states').value.trim();
+                states = statesInput.split(',').map(s => s.trim()).filter(s => s);
+                
+                if (states.length < 2) {
+                    throw new Error('Defina pelo menos 2 estados!');
+                }
+                
+                // Obter matriz de transição
+                const matrixInput = document.getElementById('transitionMatrix').value.trim();
+                const rows = matrixInput.split('\n').filter(row => row.trim());
+                
+                if (rows.length !== states.length) {
+                    throw new Error(`Matriz deve ter ${states.length} linhas (uma para cada estado)!`);
+                }
+                
+                transitionMatrix = [];
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i].split(',').map(val => parseFloat(val.trim()));
+                    
+                    if (row.length !== states.length) {
+                        throw new Error(`Linha ${i+1} deve ter ${states.length} valores!`);
+                    }
+                    
+                    if (row.some(val => isNaN(val) || val < 0 || val > 1)) {
+                        throw new Error(`Linha ${i+1} contém valores inválidos! Use números entre 0 e 1.`);
+                    }
+                    
+                    const sum = row.reduce((a, b) => a + b, 0);
+                    if (Math.abs(sum - 1) > 0.01) {
+                        throw new Error(`Linha ${i+1} deve somar 1.0 (atualmente soma ${sum.toFixed(3)})!`);
+                    }
+                    
+                    transitionMatrix.push(row);
+                }
+                
+                // Atualizar seletor de estado inicial
+                updateInitialStateSelector();
+                
+                // Mostrar matriz formatada
+                displayMatrix();
+                
+                // Criar visualização
+                createVisualization();
+                
+                // Habilitar controles
+                enableControls();
+                
+                // Reset dados
+                resetData();
+                
+                showMessage('setupMessage', '✅ Cadeia criada com sucesso!', 'success');
+                
+            } catch (error) {
+                showMessage('setupMessage', `❌ Erro: ${error.message}`, 'error');
+            }
+        }
+        
+        function updateInitialStateSelector() {
+            const selector = document.getElementById('initialState');
+            selector.innerHTML = '';
+            states.forEach((state, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = state;
+                selector.appendChild(option);
+            });
+        }
+        
+        function displayMatrix() {
+            const display = document.getElementById('matrixDisplay');
+            let html = '<strong>Matriz de Transição:</strong><br><table style="width: 100%; border-collapse: collapse;">';
+            
+            // Cabeçalho
+            html += '<tr><td></td>';
+            states.forEach(state => {
+                html += `<td style="text-align: center; padding: 5px; border: 1px solid #ddd;"><strong>${state}</strong></td>`;
+            });
+            html += '</tr>';
+            
+            // Linhas da matriz
+            states.forEach((state, i) => {
+                html += `<tr><td style="text-align: center; padding: 5px; border: 1px solid #ddd;"><strong>${state}</strong></td>`;
+                transitionMatrix[i].forEach(prob => {
+                    html += `<td style="text-align: center; padding: 5px; border: 1px solid #ddd;">${prob.toFixed(3)}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</table>';
+            display.innerHTML = html;
+        }
+        
+        function createVisualization() {
+            const container = document.getElementById('graphContainer');
+            container.innerHTML = '';
+            
+            const containerWidth = container.offsetWidth;
+            const containerHeight = container.offsetHeight;
+            const centerX = containerWidth / 2;
+            const centerY = containerHeight / 2;
+            const radius = Math.min(containerWidth, containerHeight) * 0.3;
+            
+            // Posicionar estados em círculo
+            states.forEach((state, index) => {
+                const angle = (2 * Math.PI * index) / states.length - Math.PI / 2;
+                const x = centerX + radius * Math.cos(angle) - 30;
+                const y = centerY + radius * Math.sin(angle) - 30;
+                
+                const node = document.createElement('div');
+                node.className = 'state-node';
+                node.id = `state-${index}`;
+                node.textContent = state;
+                node.style.left = `${x}px`;
+                node.style.top = `${y}px`;
+                
+                container.appendChild(node);
+            });
+            
+            // Desenhar setas de transição
+            drawTransitions(container, centerX, centerY, radius);
+        }
+        
+        function drawTransitions(container, centerX, centerY, radius) {
+            states.forEach((fromState, fromIndex) => {
+                states.forEach((toState, toIndex) => {
+                    const prob = transitionMatrix[fromIndex][toIndex];
+                    
+                    if (prob > 0.01) { // Mostrar apenas transições significativas
+                        drawTransitionArrow(container, fromIndex, toIndex, prob, centerX, centerY, radius);
+                    }
+                });
+            });
+        }
+        
+        function drawTransitionArrow(container, fromIndex, toIndex, probability, centerX, centerY, radius) {
+            const fromAngle = (2 * Math.PI * fromIndex) / states.length - Math.PI / 2;
+            const toAngle = (2 * Math.PI * toIndex) / states.length - Math.PI / 2;
+            
+            const fromX = centerX + radius * Math.cos(fromAngle);
+            const fromY = centerY + radius * Math.sin(fromAngle);
+            const toX = centerX + radius * Math.cos(toAngle);
+            const toY = centerY + radius * Math.sin(toAngle);
+            
+            if (fromIndex === toIndex) {
+                // Self-loop
+                const loopX = fromX + 40 * Math.cos(fromAngle);
+                const loopY = fromY + 40 * Math.sin(fromAngle);
+                
+                const loop = document.createElement('div');
+                loop.className = 'transition-arrow';
+                loop.style.left = `${loopX - 15}px`;
+                loop.style.top = `${loopY - 1}px`;
+                loop.style.width = '30px';
+                loop.style.height = '2px';
+                loop.style.borderRadius = '50%';
+                loop.style.border = '2px solid #4299e1';
+                loop.style.background = 'transparent';
+                
+                container.appendChild(loop);
+                
+                // Label para self-loop
+                const label = document.createElement('div');
+                label.className = 'transition-label';
+                label.textContent = probability.toFixed(2);
+                label.style.left = `${loopX - 10}px`;
+                label.style.top = `${loopY - 20}px`;
+                container.appendChild(label);
+                
+            } else {
+                // Seta entre estados diferentes
+                const deltaX = toX - fromX;
+                const deltaY = toY - fromY;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                const angle = Math.atan2(deltaY, deltaX);
+                
+                // Ajustar para não sobrepor os nós
+                const adjustedFromX = fromX + 30 * Math.cos(angle);
+                const adjustedFromY = fromY + 30 * Math.sin(angle);
+                const adjustedDistance = distance - 60;
+                
+                const arrow = document.createElement('div');
+                arrow.className = 'transition-arrow';
+                arrow.style.left = `${adjustedFromX}px`;
+                arrow.style.top = `${adjustedFromY}px`;
+                arrow.style.width = `${adjustedDistance}px`;
+                arrow.style.transform = `rotate(${angle}rad)`;
+                arrow.style.opacity = Math.max(0.3, probability);
+                
+                container.appendChild(arrow);
+                
+                // Label da probabilidade
+                const midX = adjustedFromX + (adjustedDistance / 2);
+                const midY = adjustedFromY;
+                
+                const label = document.createElement('div');
+                label.className = 'transition-label';
+                label.textContent = probability.toFixed(2);
+                label.style.left = `${midX - 15}px`;
+                label.style.top = `${midY - 15}px`;
+                container.appendChild(label);
+            }
+        }
+        
+        function enableControls() {
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('resetBtn').disabled = false;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statsGrid').style.display = 'grid';
+        }
+        
+        function resetData() {
+            simulationData = [];
+            stepCount = 0;
+            currentStateIndex = parseInt(document.getElementById('initialState').value);
+            updateVisualization();
+            updateStatus();
+            updateStatistics();
+            initializeCharts();
+        }
+        
+        function startSimulation() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            startTime = startTime || Date.now();
+            
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
+            
+            const speed = parseInt(document.getElementById('speed').value);
+            simulationInterval = setInterval(stepSimulation, speed);
+            
+            updateStatus();
+        }
+        
+        function pauseSimulation() {
+            if (!isRunning) return;
+            
+            isRunning = false;
+            clearInterval(simulationInterval);
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            
+            updateStatus();
+        }
+        
+        function resetSimulation() {
+            pauseSimulation();
+            startTime = null;
+            resetData();
+        }
+        
+        function stepSimulation() {
+            // Registrar estado atual
+            simulationData.push({
+                step: stepCount,
+                state: currentStateIndex,
+                stateName: states[currentStateIndex],
+                timestamp: Date.now()
+            });
+            
+            // Escolher próximo estado baseado na matriz de transição
+            const probabilities = transitionMatrix[currentStateIndex];
+            const random = Math.random();
+            let cumulativeProb = 0;
+            
+            for (let i = 0; i < probabilities.length; i++) {
+                cumulativeProb += probabilities[i];
+                if (random <= cumulativeProb) {
+                    currentStateIndex = i;
+                    break;
+                }
+            }
+            
+            stepCount++;
+            
+            updateVisualization();
+            updateStatus();
+            updateStatistics();
+            updateCharts();
+        }
+        
+        function updateVisualization() {
+            // Remover highlight anterior
+            document.querySelectorAll('.state-node').forEach(node => {
+                node.classList.remove('current');
+            });
+            
+            // Destacar estado atual
+            const currentNode = document.getElementById(`state-${currentStateIndex}`);
+            if (currentNode) {
+                currentNode.classList.add('current');
+            }
+        }
+        
+        function updateStatus() {
+            const statusText = isRunning ? '🟢 Executando' : '🟡 Pausado';
+            document.getElementById('statusText').textContent = statusText;
+            document.getElementById('currentStep').textContent = stepCount;
+            document.getElementById('currentStateText').textContent = states[currentStateIndex] || '-';
+        }
+        
+        function updateStatistics() {
+            document.getElementById('totalSteps').textContent = stepCount;
+            
+            if (simulationData.length > 0) {
+                const uniqueStates = new Set(simulationData.map(d => d.state)).size;
+                document.getElementById('uniqueStates').textContent = uniqueStates;
+                
+                // Calcular maior sequência no mesmo estado
+                let longestRun = 1;
+                let currentRun = 1;
+                for (let i = 1; i < simulationData.length; i++) {
+                    if (simulationData[i].state === simulationData[i-1].state) {
+                        currentRun++;
+                    } else {
+                        longestRun = Math.max(longestRun, currentRun);
+                        currentRun = 1;
+                    }
+                }
+                longestRun = Math.max(longestRun, currentRun);
+                document.getElementById('longestRun').textContent = longestRun;
+                
+                // Calcular transições por minuto
+                if (startTime && stepCount > 0) {
+                    const timeElapsed = (Date.now() - startTime) / 1000 / 60; // minutos
+                    const transitionsPerMinute = stepCount / timeElapsed;
+                    document.getElementById('avgTransitions').textContent = transitionsPerMinute.toFixed(1);
+                }
+            }
+        }
+        
+        function switchTab(tabName) {
+            // Atualizar tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            // Atualizar gráfico específico
+            if (tabName === 'distribution') {
+                updateDistributionAnalysis();
+            }
+        }
+        
+        function initializeCharts() {
+            // Destruir charts existentes
+            if (frequencyChart) frequencyChart.destroy();
+            if (transitionChart) transitionChart.destroy();
+            if (timelineChart) timelineChart.destroy();
+            if (distributionChart) distributionChart.destroy();
+            
+            // Frequência dos Estados
+            const freqCtx = document.getElementById('frequencyChart').getContext('2d');
+            frequencyChart = new Chart(freqCtx, {
+                type: 'bar',
+                data: {
+                    labels: states,
+                    datasets: [{
+                        label: 'Frequência Observada',
+                        data: new Array(states.length).fill(0),
+                        backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Proporção'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribuição Observada dos Estados'
+                        }
+                    }
+                }
+            });
+            
+            // Matriz de Transições Observada
+            const transCtx = document.getElementById('transitionChart').getContext('2d');
+            transitionChart = new Chart(transCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Transições Observadas',
+                        data: [],
+                        backgroundColor: 'rgba(118, 75, 162, 0.7)',
+                        borderColor: 'rgba(118, 75, 162, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Número de Transições'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Transições Observadas Entre Estados'
+                        }
+                    }
+                }
+            });
+            
+            // Timeline
+            const timeCtx = document.getElementById('timelineChart').getContext('2d');
+            timelineChart = new Chart(timeCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: states.map((state, index) => ({
+                        label: state,
+                        data: [],
+                        borderColor: `hsl(${index * 360 / states.length}, 70%, 50%)`,
+                        backgroundColor: `hsla(${index * 360 / states.length}, 70%, 50%, 0.1)`,
+                        fill: false,
+                        tension: 0.1
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Passo'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Frequência Acumulada'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Evolução Temporal da Frequência dos Estados'
+                        }
+                    }
+                }
+            });
+            
+            // Distribuição Estacionária
+            const distCtx = document.getElementById('distributionChart').getContext('2d');
+            distributionChart = new Chart(distCtx, {
+                type: 'bar',
+                data: {
+                    labels: states,
+                    datasets: [
+                        {
+                            label: 'Distribuição Teórica',
+                            data: [],
+                            backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                            borderColor: 'rgba(102, 126, 234, 1)',
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Distribuição Observada',
+                            data: [],
+                            backgroundColor: 'rgba(245, 101, 101, 0.7)',
+                            borderColor: 'rgba(245, 101, 101, 1)',
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1.0,
+                            title: {
+                                display: true,
+                                text: 'Probabilidade'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateCharts() {
+            if (simulationData.length === 0) return;
+            
+            // Atualizar frequência dos estados
+            const stateCounts = new Array(states.length).fill(0);
+            simulationData.forEach(data => {
+                stateCounts[data.state]++;
+            });
+            
+            const stateFrequencies = stateCounts.map(count => count / simulationData.length);
+            frequencyChart.data.datasets[0].data = stateFrequencies;
+            frequencyChart.update('none');
+            
+            // Atualizar matriz de transições observada
+            const transitionCounts = {};
+            for (let i = 1; i < simulationData.length; i++) {
+                const from = simulationData[i-1].state;
+                const to = simulationData[i].state;
+                const key = `${states[from]} → ${states[to]}`;
+                transitionCounts[key] = (transitionCounts[key] || 0) + 1;
+            }
+            
+            const transitionLabels = Object.keys(transitionCounts);
+            const transitionValues = Object.values(transitionCounts);
+            
+            transitionChart.data.labels = transitionLabels;
+            transitionChart.data.datasets[0].data = transitionValues;
+            transitionChart.update('none');
+            
+            // Atualizar timeline (amostragem para performance)
+            const timelineSteps = [];
+            const timelineData = states.map(() => []);
+            
+            const sampleInterval = Math.max(1, Math.floor(simulationData.length / 100));
+            
+            for (let i = 0; i < simulationData.length; i += sampleInterval) {
+                timelineSteps.push(i);
+                
+                // Calcular frequência acumulada até este ponto
+                const dataSlice = simulationData.slice(0, i + 1);
+                const counts = new Array(states.length).fill(0);
+                dataSlice.forEach(d => counts[d.state]++);
+                
+                counts.forEach((count, stateIndex) => {
+                    timelineData[stateIndex].push(count / dataSlice.length);
+                });
+            }
+            
+            timelineChart.data.labels = timelineSteps;
+            timelineChart.data.datasets.forEach((dataset, index) => {
+                dataset.data = timelineData[index];
+            });
+            timelineChart.update('none');
+        }
+        
+        function updateDistributionAnalysis() {
+            if (simulationData.length === 0) return;
+            
+            // Calcular distribuição estacionária teórica
+            const stationaryDist = calculateStationaryDistribution();
+            
+            // Calcular distribuição observada
+            const stateCounts = new Array(states.length).fill(0);
+            simulationData.forEach(data => {
+                stateCounts[data.state]++;
+            });
+            const observedDist = stateCounts.map(count => count / simulationData.length);
+            
+            // Atualizar gráfico
+            distributionChart.data.datasets[0].data = stationaryDist;
+            distributionChart.data.datasets[1].data = observedDist;
+            distributionChart.update();
+            
+            // Mostrar análise de convergência
+            const convergenceInfo = document.getElementById('convergenceInfo');
+            let html = '<h4 style="margin: 0 0 15px 0; color: #4a5568;">📊 Análise de Convergência</h4>';
+            
+            html += '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 15px 0; padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0;">';
+            html += '<div style="font-weight: bold; color: #2d3748; border-bottom: 2px solid #667eea; padding-bottom: 5px;">Estado</div>';
+            html += '<div style="font-weight: bold; color: #2d3748; border-bottom: 2px solid #667eea; padding-bottom: 5px;">Teórica</div>';
+            html += '<div style="font-weight: bold; color: #2d3748; border-bottom: 2px solid #667eea; padding-bottom: 5px;">Observada</div>';
+            
+            states.forEach((state, i) => {
+                const theoretical = stationaryDist[i];
+                const observed = observedDist[i];
+                const diff = Math.abs(theoretical - observed);
+                const color = diff < 0.05 ? '#48bb78' : diff < 0.1 ? '#ed8936' : '#f56565';
+                
+                html += `<div style="padding: 8px 0; font-weight: 600;">${state}</div>`;
+                html += `<div style="padding: 8px 0;">${theoretical.toFixed(3)}</div>`;
+                html += `<div style="padding: 8px 0; color: ${color}; font-weight: 600;">${observed.toFixed(3)} <span style="font-size: 0.9em;">(Δ ${diff.toFixed(3)})</span></div>`;
+            });
+            html += '</div>';
+            
+            // Calcular distância total
+            const totalDistance = stationaryDist.reduce((sum, theoretical, i) => {
+                return sum + Math.abs(theoretical - observedDist[i]);
+            }, 0);
+            
+            html += `<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">`;
+            html += `<p style="margin: 0 0 10px 0; font-weight: bold;"><strong>📏 Distância Total:</strong> ${totalDistance.toFixed(4)}</p>`;
+            
+            if (simulationData.length < 100) {
+                html += '<p style="color: #ed8936; margin: 0; padding: 8px; background: #fef5e7; border-radius: 4px; border-left: 3px solid #ed8936;">⚠️ <strong>Poucos dados:</strong> Execute mais passos para análise confiável.</p>';
+            } else if (totalDistance < 0.1) {
+                html += '<p style="color: #48bb78; margin: 0; padding: 8px; background: #f0fff4; border-radius: 4px; border-left: 3px solid #48bb78;">✅ <strong>Excelente:</strong> Boa convergência para a distribuição estacionária!</p>';
+            } else if (totalDistance < 0.2) {
+                html += '<p style="color: #ed8936; margin: 0; padding: 8px; background: #fef5e7; border-radius: 4px; border-left: 3px solid #ed8936;">⚠️ <strong>Moderado:</strong> Convergência razoável. Execute mais passos para melhorar.</p>';
+            } else {
+                html += '<p style="color: #f56565; margin: 0; padding: 8px; background: #fef5f5; border-radius: 4px; border-left: 3px solid #f56565;">❌ <strong>Lento:</strong> Convergência lenta. Verifique a cadeia ou execute mais passos.</p>';
+            }
+            
+            html += '</div>';
+            
+            convergenceInfo.innerHTML = html;
+        }
+        
+        function calculateStationaryDistribution() {
+            // Resolver o sistema π = πP onde π é a distribuição estacionária
+            // Usando método iterativo (power method)
+            let pi = new Array(states.length).fill(1 / states.length);
+            
+            for (let iter = 0; iter < 1000; iter++) {
+                const newPi = new Array(states.length).fill(0);
+                
+                for (let i = 0; i < states.length; i++) {
+                    for (let j = 0; j < states.length; j++) {
+                        newPi[i] += pi[j] * transitionMatrix[j][i];
+                    }
+                }
+                
+                // Verificar convergência
+                const diff = pi.reduce((sum, val, i) => sum + Math.abs(val - newPi[i]), 0);
+                pi = newPi;
+                
+                if (diff < 1e-10) break;
+            }
+            
+            return pi;
+        }
+        
+        function loadPreset(type) {
+            if (type === 'weather') {
+                document.getElementById('states').value = 'Sol, Chuva, Nublado';
+                document.getElementById('transitionMatrix').value = '0.7, 0.2, 0.1\n0.3, 0.4, 0.3\n0.2, 0.3, 0.5';
+            } else if (type === 'random_walk') {
+                document.getElementById('states').value = 'A, B, C, D';
+                document.getElementById('transitionMatrix').value = '0.5, 0.5, 0.0, 0.0\n0.25, 0.5, 0.25, 0.0\n0.0, 0.25, 0.5, 0.25\n0.0, 0.0, 0.5, 0.5';
+            }
+            setupChain();
+        }
+        
+        function showMessage(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}-message">${message}</div>`;
+            setTimeout(() => {
+                element.innerHTML = '';
+            }, 5000);
+        }
+        
+        // Event listeners
+        document.getElementById('speed').addEventListener('input', function() {
+            const speed = parseInt(this.value);
+            document.getElementById('speedValue').textContent = `${(speed / 1000).toFixed(1)}s`;
+            
+            if (isRunning) {
+                clearInterval(simulationInterval);
+                simulationInterval = setInterval(stepSimulation, speed);
+            }
+        });
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar cadeia padrão
+            setupChain();
+        });
+    </script>
+</body>
+</html>
